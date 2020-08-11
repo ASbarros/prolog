@@ -4,6 +4,19 @@
 %2. v eh usada em Tk, seja em uma condicao ou acao, e
 %3. ha um caminho de Ti at Tk,
 
+%estado(N).
+%N = numero do estado
+estado(0).
+estado(1).
+estado(2).
+estado(3).
+estado(4).
+estado(5).
+estado(6).
+estado(7).
+estado(8).
+
+
 %transicao(N, Si, Sf).
 %N = numero da transicao
 %Si = estado inicial
@@ -54,14 +67,56 @@ acao(6, 6, [], [b, d]).
 acao(7, 7, [], [b]).
 acao(8, 8, [], []).
 
-definida(V, Ti):- (( acao(_, Ti, La, _), member(V, La) );
-                  ( evento(_, Ti, Le, _), member(V, Le))), transicao(Ti, _, _).
+%existeCaminho(Ti, Tk).
+%Ti = transicao de origem
+%Tk = transicao final
 
-usada(V, Tk):-(( condicao(_, Tk, _, Lc), member(V, Lc) );
-              ( acao(_, Tk, _, La), member(V, La) )), transicao(Tk, _, _).
+definida(V, Ti):-
+    transicao(Ti, _, _),
+    (( acao(_, Ti, La, _), member(V, La) );
+    ( evento(_, Ti, Le, _), member(V, Le))).
+
+usada(V, Tk):-
+    transicao(Tk, _, _),
+    (( condicao(_, Tk, _, Lc), member(V, Lc) );
+    ( acao(_, Tk, _, La), member(V, La) )).
 
 dep_dados(Ti, Tk):- definida(V, Ti),
-                    usada(V, Tk).
+                    usada(V, Tk),
+                    tem_caminho(Ti, Tk, _).
 
-%TODO:// estudar recursao para fazer existeCaminho
 
+profundidade(Caminho, No_meta, No_meta, [No_meta|Caminho]).
+
+profundidade(Caminho, No, No_meta, Sol):-
+      transicao(N, No, No1),
+      profundidade([No|Caminho], No1, No_meta, Sol).
+
+tem_caminho(No_inicial, No_meta, Solucao):-
+      profundidade([], No_inicial, No_meta, Sol_inv),
+      reverse(Sol_inv, Solucao),
+	  not(member(g, Solucao)).
+
+
+
+%daki pra baixo eh estudo
+existeCaminho(Ti, Tk) :-%caso base
+    transicao(_, Ti, Tk).
+existeCaminho(Ti, Tk) :- %case recursivo
+    transicao(_, Ti, Z),
+    existeCaminho(Z, Tk).
+
+s(2,3).
+s(1,3).
+s(3,4).
+s(4,5).
+s(3,5).
+s(2,5).
+objetivo(5).
+objetivo(1).
+objetivo(2).
+busca_profundidade(N,[N]) :-
+    objetivo(N).
+busca_profundidade(N,[N|Sol1]) :-
+    s(N,N1),
+    busca_profundidade(N1,Sol1).

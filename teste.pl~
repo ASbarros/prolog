@@ -1,0 +1,6 @@
+pertence(Elemento, [Elemento|Cauda]).
+pertence(Elemento, [Cabeca|Cauda]) :-
+    pertence(Elemento,Cauda).
+% E = element, L = list, R = result
+% e.g. add_elem_in_list ([1,2,3,4], 5, R).
+add_elem_in_list(L, E, R) :- append(L, [E], R).
