@@ -82,9 +82,7 @@ usada(V, Tk):-
 
 dep_dados(Ti, Tk):- definida(V, Ti),
                     usada(V, Tk),
-                    tem_caminho(Ti, Tk, L).
-ligado(No, No1, C) :-
-    transicao(_, No, No1).
+                    tem_caminho(Ti, Tk, _).
 
 % Encontra o caminho Solucao entre No_inicial e No_meta
 tem_caminho( No_inicial, No_meta, Solucao ):-
@@ -94,30 +92,7 @@ tem_caminho( No_inicial, No_meta, Solucao ):-
 % Realiza a pesquisa em profundidade
 profundidade(Caminho, No_meta, No_meta, [No_meta|Caminho]).
 profundidade(Caminho, No, No_meta, Sol):-
-    ligado(No, No1, C),
+  transicao(_, No, No1),
  not( member(No1, Caminho) ), % previne ciclos
  profundidade( [No|Caminho], No1, No_meta, Sol ).
 
-
-
-%daki pra baixo eh estudo
-existeCaminho(Ti, Tk) :-%caso base
-    transicao(_, Ti, Tk).
-existeCaminho(Ti, Tk) :- %case recursivo
-    transicao(_, Ti, Z),
-    existeCaminho(Z, Tk).
-
-s(2,3).
-s(1,3).
-s(3,4).
-s(4,5).
-s(3,5).
-s(2,5).
-objetivo(5).
-objetivo(1).
-objetivo(2).
-busca_profundidade(N,[N]) :-
-    objetivo(N).
-busca_profundidade(N,[N|Sol1]) :-
-    s(N,N1),
-    busca_profundidade(N1,Sol1).

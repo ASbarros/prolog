@@ -67,14 +67,8 @@ acao(6, 6, [], [b, d]).
 acao(7, 7, [], [b]).
 acao(8, 8, [], []).
 
-%existeCaminho(Ti, Tk).
 %Ti = transicao de origem
 %Tk = transicao final
-existeCaminho(Ti, Tk) :-%caso base
-    transicao(_, Ti, Tk).
-existeCaminho(Ti, Tk) :- %case recursivo
-    transicao(_, Ti, Z),
-    existeCaminho(Z, Tk).
 
 definida(V, Ti):-
     transicao(Ti, _, _),
@@ -89,19 +83,30 @@ usada(V, Tk):-
 dep_dados(Ti, Tk):- definida(V, Ti),
                     usada(V, Tk),
                     tem_caminho(Ti, Tk, _).
+ligado(No, No1) :-
+    transicao(_, No, No1).
 
+% Encontra o caminho Solucao entre No_inicial e No_meta
+tem_caminho( No_inicial, No_meta, Solucao ):-
+ profundidade( [], No_inicial, No_meta, Sol_inv ),
+ reverse( Sol_inv, Solucao ).
 
-tem_caminho(No_inicial, No_meta, Solucao):-
-      profundidade([], No_inicial, No_meta, Sol_inv),
-      reverse(Sol_inv, Solucao),
-	  not(member(g, Solucao)).
-
+% Realiza a pesquisa em profundidade
 profundidade(Caminho, No_meta, No_meta, [No_meta|Caminho]).
-
 profundidade(Caminho, No, No_meta, Sol):-
-      transicao(N, No, No1),
-      profundidade([No|Caminho], No1, No_meta, Sol).
-s(1,2).
+  transicao(_, No, No_meta),
+ not( member(No1, Caminho) ), % previne ciclos
+ profundidade( [No|Caminho], No1, No_meta, Sol ).
+
+
+
+%daki pra baixo eh estudo
+existeCaminho(Ti, Tk) :-%caso base
+    transicao(_, Ti, Tk).
+existeCaminho(Ti, Tk) :- %case recursivo
+    transicao(_, Ti, Z),
+    existeCaminho(Z, Tk).
+
 s(2,3).
 s(1,3).
 s(3,4).
@@ -116,3 +121,21 @@ busca_profundidade(N,[N]) :-
 busca_profundidade(N,[N|Sol1]) :-
     s(N,N1),
     busca_profundidade(N1,Sol1).
+
+
+estrada(a,b,25).
+estrada(b,c,19).
+estrada(a,d,23).
+estrada(c,d,14).
+estrada(b,e,32).
+estrada(e,f,26).
+estrada(c,f,28).
+estrada(d,f,30).
+
+distancia(X,Y,D):-estrada(X,Y,D).
+distancia(X,Y,D):-distancia(X,B,D1),distancia(B,Y,D2), D=[D1|D2].
+
+d(X,Y,[S]):-
+    transicao(S,X,Y).
+d(X,Y,[S|Sol]):-
+    d(X,B,Sol),d(B,Y,Sol).
