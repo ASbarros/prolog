@@ -82,12 +82,14 @@ usada(V, Tk):-
 
 dep_dados(Ti, Tk):- definida(V, Ti),
                     usada(V, Tk),
-                    tem_caminho(Ti, Tk, _).
+                    transicao(Ti,No,_),
+                    transicao(Tk,_,No_meta),
+                    tem_caminho(No, No_meta, _).
 
 % Encontra o caminho Solucao entre No_inicial e No_meta
 tem_caminho( No_inicial, No_meta, Solucao ):-
- profundidade( [], No_inicial, No_meta, Sol_inv ),
- reverse( Sol_inv, Solucao ).
+    profundidade( [], No_inicial, No_meta, Sol_inv ),
+    reverse( Sol_inv, Solucao ).
 
 % Realiza a pesquisa em profundidade
 profundidade(Caminho, No_meta, No_meta, [No_meta|Caminho]).
