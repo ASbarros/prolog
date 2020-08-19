@@ -1,8 +1,17 @@
+% dependencia de dados
 %Dadas as transicoes Ti e Tk, ha dependencia de dados se existe uma
 % variavel v, tal que
 %1. v eh definida em Ti, seja em uma acao ou evento,
 %2. v eh usada em Tk, seja em uma condicao ou acao, e
 %3. ha um caminho de Ti at Tk,
+
+% => dependencia de controle
+% - dois conceitos importantes
+%   1. Um estado Z pos-domina um estado Y, se para cada caminho a partir de Y ate o estado final contem Z
+%   2. Z pos-domina uma transicao T, se para cada caminho a partir de Y passando pela transicao T ate o estado final passar por Z
+% - uma transicao Ti tem dependencia de controle em Tk se
+%   1. o estado inicial de Tk nao pos-domina o estado inicial de Ti
+%   2. o estado inicial de Tk pos-domina a transicao Ti
 
 %estado(N).
 %N = numero do estado
