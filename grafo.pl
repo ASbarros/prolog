@@ -86,15 +86,6 @@ usada(V, Tk):-
     (( condicao(_, Tk, _, Lc), member(V, Lc) );
     ( acao(_, Tk, _, La), member(V, La) )).
 
-%Ti = transicao de origem
-%Tk = transicao final
-dep_dados(Ti, Tk):- 
-    definida(V, Ti),
-    usada(V, Tk),
-    transicao(Ti,No,_),
-    transicao(Tk,_,No_meta),
-    tem_caminho(No, No_meta, _).
-
 % Encontra o caminho Solucao entre No_inicial e No_meta
 tem_caminho( No_inicial, No_meta, Solucao ):-
     profundidade( [], No_inicial, No_meta, Sol_inv ),
@@ -107,3 +98,11 @@ profundidade(Caminho, No, No_meta, Sol):-
     not( member(No1, Caminho) ), % previne ciclos
     profundidade( [No|Caminho], No1, No_meta, Sol ).
 
+%Ti = transicao de origem
+%Tk = transicao final
+dep_dados(Ti, Tk):- 
+    definida(V, Ti),
+    usada(V, Tk),
+    transicao(Ti,No,_),
+    transicao(Tk,_,No_meta),
+    tem_caminho(No, No_meta, _).
