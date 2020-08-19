@@ -13,6 +13,9 @@
 %   1. o estado inicial de Tk nao pos-domina o estado inicial de Ti
 %   2. o estado inicial de Tk pos-domina a transicao Ti
 
+
+%------------- fatos -----------------------
+
 %estado(N).
 %N = numero do estado
 estado(0).
@@ -76,15 +79,7 @@ acao(6, 6, [], [b, d]).
 acao(7, 7, [], [b]).
 acao(8, 8, [], []).
 
-definida(V, Ti):-
-    transicao(Ti, _, _),
-    (( acao(_, Ti, La, _), member(V, La) );
-    ( evento(_, Ti, Le, _), member(V, Le))).
-
-usada(V, Tk):-
-    transicao(Tk, _, _),
-    (( condicao(_, Tk, _, Lc), member(V, Lc) );
-    ( acao(_, Tk, _, La), member(V, La) )).
+%-------------------------------------------------------------
 
 % Encontra o caminho Solucao entre No_inicial e No_meta
 tem_caminho( No_inicial, No_meta, Solucao ):-
@@ -98,6 +93,18 @@ profundidade(Caminho, No, No_meta, Sol):-
     not( member(No1, Caminho) ), % previne ciclos
     profundidade( [No|Caminho], No1, No_meta, Sol ).
 
+%----------------- dependencia de dados ----------------------
+
+definida(V, Ti):-
+    transicao(Ti, _, _),
+    (( acao(_, Ti, La, _), member(V, La) );
+    ( evento(_, Ti, Le, _), member(V, Le))).
+
+usada(V, Tk):-
+    transicao(Tk, _, _),
+    (( condicao(_, Tk, _, Lc), member(V, Lc) );
+    ( acao(_, Tk, _, La), member(V, La) )).
+
 %Ti = transicao de origem
 %Tk = transicao final
 dep_dados(Ti, Tk):- 
@@ -106,3 +113,6 @@ dep_dados(Ti, Tk):-
     transicao(Ti,No,_),
     transicao(Tk,_,No_meta),
     tem_caminho(No, No_meta, _).
+
+
+%------------------ dependencia de controle -------------------
