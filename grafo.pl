@@ -127,16 +127,23 @@ dep_dados(Ti, Tk):-
 
 %------------------ dependencia de controle -------------------
 %   1. Um estado Z pos-domina um estado Y, se para cada caminho a partir de Y ate o estado final contem Z
-
+%Y = estado Y
+%Final = estado final
+% lista todos os caminhos de Y ate o estado final
 lista_caminhos(Y, Final):-
     tem_caminho(Y, Final, L),
     assertz(lista(L)).
 
+%Y = estado Y
+%Z = estado Z
+%Final = estado final
+% lista todos os caminhos de Y ate o estado final que contem Z
 lista_caminhos_2(Y, Z, Final):-
     tem_caminho(Y, Final, L),
     member(Z, L),
     assertz(lista2(L)).
 
+% verifica se Z pos domina Y, passados nas funcoes acima
 pos_domina() :- 
     findall(X,lista(X),L), 
     length(L,N), 
