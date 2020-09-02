@@ -82,25 +82,12 @@ tem_caminho( No_inicial, No_meta, Solucao ):-
     profundidade( [], No_inicial, No_meta, Sol_inv ),
     reverse( Sol_inv, Solucao ).
 
-% Encontra o caminho Solucao entre No_inicial e No_meta, passando por um estado Z
-tem_caminhoZ( No_inicial, No_meta, Solucao, Z):-
-    profundidade( [], No_inicial, No_meta, Sol_inv),
-    member(Z, Sol_inv),
-    reverse( Sol_inv, Solucao ).
-
 % Realiza a pesquisa em profundidade
 profundidade(Caminho, No_meta, No_meta, [No_meta|Caminho]).
 profundidade(Caminho, No, No_meta, Sol):-
     transicao(_, No, No1),
     not( member(No1, Caminho) ), % previne ciclos
     profundidade( [No|Caminho], No1, No_meta, Sol ).
-% Realiza a pesquisa em profundidade
-profundidade2(Caminho, No_meta, No_meta, [No_meta|Caminho], 1):- !.
-profundidade2(Caminho, No, No_meta, Sol, T):-
-    transicao(_, No, No1),
-    not( member(No1, Caminho) ), % previne ciclos
-    profundidade2( [No|Caminho], No1, No_meta, Sol ,N),T is N +1.
-
 
 %b(N1,N2):-tem_caminho(1,4,N1,_), tem_caminhoZ(1,4,N3,2,_),asserta(N3), N2 = [N1|N3].
 %----------------- dependencia de dados ----------------------
