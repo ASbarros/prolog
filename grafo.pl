@@ -139,3 +139,17 @@ pos_domina() :-
     retractall(lista2(X2)), 
     retractall(lista(X)),
     N == N2.
+
+%   2. Z pos-domina uma transicao T, se para cada caminho a partir de Y passando pela transicao T ate o estado final passar por Z
+
+% passando uma lista de estados, se tem a transicao T -> retorna false se tiver e verdadeiro se nao tiver
+passar([], 0,T).
+passa([H|R], Total,T) :-
+    not(transicao(T,H,_)),
+    passa(R, Subtotal,T).
+
+% verifica se do no inicial ate o no final passa pela transicao T
+tem_caminhoT( No_inicial, No_meta, T):-
+    profundidade( [], No_inicial, No_meta, Sol_inv),
+    reverse( Sol_inv, Solucao ),
+    not(somar(Solucao,A,T)).
