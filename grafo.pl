@@ -10,7 +10,7 @@
 %   1. Um estado Z pos-domina um estado Y, se para cada caminho a partir de Y ate o estado final contem Z
 %   2. Z pos-domina uma transicao T, se para cada caminho a partir de Y passando pela transicao T ate o estado final passar por Z
 % - uma transicao Ti tem dependencia de controle em Tk se
-%   1. o estado inicial de Tk nao pos-domina o estado inicial de Ti
+%   1. o estado inicial de T6 nao pos-domina o estado inicial de T4
 %   2. o estado inicial de Tk pos-domina a transicao Ti
 
 
@@ -118,38 +118,44 @@ dep_dados(Ti, Tk):-
 %Final = estado final
 % lista todos os caminhos de Y ate o estado final
 lista_caminhos(Y, Final):-
-    tem_caminho(Y, Final, L),
-    assertz(lista(L)).
+    tem_caminho(Y, Final, _).
 
 %Y = estado Y
 %Z = estado Z
 %Final = estado final
 % lista todos os caminhos de Y ate o estado final que contem Z
-lista_caminhos_2(Y, Z, Final):-
+lista_caminhos_2(Y, Z, L):-
+    final(Final),
     tem_caminho(Y, Final, L),
-    member(Z, L),
-    assertz(lista2(L)).
+    member(Z, L).
 
-% verifica se Z pos domina Y, passados nas funcoes acima
-pos_domina() :- 
-    findall(X,lista(X),L), 
-    length(L,N), 
-    findall(X2,lista2(X2),L2), 
-    length(L2,N2), 
-    retractall(lista2(X2)), 
-    retractall(lista(X)),
+% verifica se o estado Z pos domina o estado Y
+pos_domina_estado(Z, Y) :-
+    final(Final), 
+    findall(X, tem_caminho(Y, Final, X), L), 
+    length(L, N), 
+    findall(X2, lista_caminhos_2(Y, Z, X2), L2), 
+    length(L2, N2),
     N == N2.
 
 %   2. Z pos-domina uma transicao T, se para cada caminho a partir de Y passando pela transicao T ate o estado final passar por Z
 
-% passando uma lista de estados, se tem a transicao T -> retorna false se tiver e verdadeiro se nao tiver
-passar([], 0,T).
-passa([H|R], Total,T) :-
-    not(transicao(T,H,_)),
-    passa(R, Subtotal,T).
+% verifica se um elemento Z esta contido em uma lista, que esta dentro de outra lista. Uma lista de listas
+customMember([], _).
+customMember([H|Trail] , Z):-
+    member(Z, H),
+    percore(Trail, Z).
 
-% verifica se do no inicial ate o no final passa pela transicao T
-tem_caminhoT( No_inicial, No_meta, T):-
-    profundidade( [], No_inicial, No_meta, Sol_inv),
-    reverse( Sol_inv, Solucao ),
-    not(somar(Solucao,A,T)).
+% verifica se o estado Z pos domina a transicao Ti
+pos_domina_transicao(Z, Ti):-
+    transicao(Ti, _, X),
+    final(Final),
+    findall(L, tem_caminho(X, Final, L), Listas),
+    findall(_, customMember(Listas, Z), _).
+
+% verifica se a transicao Tk tem dependencia de controle com a transicao Ti
+dep_controle(Tk, Ti):-
+    transicao(Tk, Z, _),
+    transicao(Ti, Y, _),
+    not(pos_domina_estado(Z, Y)),
+    pos_domina_transicao(Z, Ti).
