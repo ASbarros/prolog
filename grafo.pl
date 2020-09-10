@@ -23,6 +23,8 @@ estado(1).
 estado(2).
 estado(3).
 estado(4).
+
+%especifica qual eh o estado final
 final(4).
 
 %transicao(N, Si, Sf).
