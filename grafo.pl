@@ -10,7 +10,7 @@
 %   1. Um estado Z pos-domina um estado Y, se para cada caminho a partir de Y ate o estado final contem Z
 %   2. Z pos-domina uma transicao T, se para cada caminho a partir de Y passando pela transicao T ate o estado final passar por Z
 % - uma transicao Ti tem dependencia de controle em Tk se
-%   1. o estado inicial de T6 nao pos-domina o estado inicial de T4
+%   1. o estado inicial de Tk nao pos-domina o estado inicial de Ti
 %   2. o estado inicial de Tk pos-domina a transicao Ti
 
 
@@ -99,17 +99,24 @@ definida(V, Ti):-
 
 usada(V, Tk):-
     transicao(Tk, _, _),
-    (( condicao(_, Tk, _, Lc), member(V, Lc) );
-    ( acao(_, Tk, _, La), member(V, La) )).
+    ( ( condicao(_, Tk, _, Lc), member(V, Lc));
+    ( acao(_, Tk, _, La), member(V, La) ) ).
+
+%funcao auxiliar para a dependencia de dados
+%Ti = transicao de origem
+%Tk = transicao final
+dep_dados_aux(Ti, Tk, L):-
+    definida(V, Ti),
+    usada(V, Tk),
+    transicao(Ti, No, _),
+    transicao(Tk, _, No_meta),
+    %findall(X, tem_caminho(No, No_meta, X), L),write(L).
+    tem_caminho(No, No_meta, L).
 
 %Ti = transicao de origem
 %Tk = transicao final
 dep_dados(Ti, Tk):- 
-    definida(V, Ti),
-    usada(V, Tk),
-    transicao(Ti,No,_),
-    transicao(Tk,_,No_meta),
-    tem_caminho(No, No_meta, _).
+    findall(X, dep_dados_aux(Ti, Tk, X), _).
 
 
 %------------------ dependencia de controle -------------------
