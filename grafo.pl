@@ -91,14 +91,19 @@ profundidade(Caminho, No, No_meta, Sol):-
     not( member(No1, Caminho) ), % previne ciclos
     profundidade( [No|Caminho], No1, No_meta, Sol ).
 
-%b(N1,N2):-tem_caminho(1,4,N1,_), tem_caminhoZ(1,4,N3,2,_),asserta(N3), N2 = [N1|N3].
-%----------------- dependencia de dados ----------------------
 
+%----------------- dependencia de dados ----------------------
+% V = variavel
+% Ti = transicao
+% verifica se uma variavel V eh definida na transicao Ti
 definida(V, Ti):-
     transicao(Ti, _, _),
     (( acao(_, Ti, La, _), member(V, La) );
     ( evento(_, Ti, Le, _), member(V, Le))).
 
+% V = variavel
+% Tk = transicao
+% verifica se uma variavel V eh usada na transicao Tk
 usada(V, Tk):-
     transicao(Tk, _, _),
     ( ( condicao(_, Tk, _, Lc), member(V, Lc));
