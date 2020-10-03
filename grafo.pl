@@ -158,7 +158,7 @@ pos_domina_estado(Z, Y) :-
 customMember([], _).
 customMember([H|Trail] , Z):-
     member(Z, H),
-    percore(Trail, Z).
+    customMember(Trail, Z).
 
 % verifica se o estado Z pos domina a transicao Ti
 pos_domina_transicao(Z, Ti):-
