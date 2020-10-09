@@ -163,8 +163,7 @@ pos_domina_estado(Z, Y) :-
     length(L, N), 
     findall(X2, lista_caminhos_2(Y, Z, X2), L2), 
     length(L2, N2),
-    N == N2,
-    write('estado '),write(Z),write(' pos domina '),write(Y),nl.
+    N == N2.
 
 %   2. Z pos-domina uma transicao T, se para cada caminho a partir de Y passando pela transicao T ate o estado final passar por Z
 
@@ -179,9 +178,7 @@ pos_domina_transicao(Z, Ti):-
     transicao(Ti, _, X),
     final(Final),
     findall(L, tem_caminho(X, Final, L), Listas),
-    customMember(Listas, Z),
-    write('listas '), write(Listas),nl,
-    write('estado '), write(Z), write(' pos domina transicao '), write(Ti), nl.
+    customMember(Listas, Z).
 
 % verifica se a transicao Tk tem dependencia de controle com a transicao Ti
 dep_controle(Tk, Ti):-
@@ -204,11 +201,9 @@ gera_grafo_dep_dados():-
     assertz(dependencia_dados(T, T2)).
 
 gera_grafo_dep_controle():-
-    write('dependencia de controle: '), nl,
     transicao(T, _, _),
     transicao(T2, _, _),
     dep_controle(T, T2),
-    write('transicoes: '), write(T), write(' | '), write(T2), nl,
     assertz(dependencia_controle(T, T2)),nl,nl.
 
 grafo_dep():-
