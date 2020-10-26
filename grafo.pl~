@@ -1,8 +1,20 @@
+% dependencia de dados
 %Dadas as transicoes Ti e Tk, ha dependencia de dados se existe uma
 % variavel v, tal que
 %1. v eh definida em Ti, seja em uma acao ou evento,
 %2. v eh usada em Tk, seja em uma condicao ou acao, e
-%3. ha um caminho de Ti at Tk,
+%3. ha um caminho de Ti ate Tk,
+
+% => dependencia de controle
+% - dois conceitos importantes
+%   1. Um estado Z pos-domina um estado Y, se para cada caminho a partir de Y ate o estado final contem Z
+%   2. Z pos-domina uma transicao T, se para cada caminho a partir de Y passando pela transicao T ate o estado final passar por Z
+% - uma transicao Ti tem dependencia de controle em Tk se
+%   1. o estado inicial de Tk nao pos-domina o estado inicial de Ti
+%   2. o estado inicial de Tk pos-domina a transicao Ti
+
+
+%------------- fatos -----------------------
 
 %estado(N).
 %N = numero do estado
@@ -11,11 +23,9 @@ estado(1).
 estado(2).
 estado(3).
 estado(4).
-estado(5).
-estado(6).
-estado(7).
-estado(8).
 
+%especifica qual eh o estado final
+final(4).
 
 %transicao(N, Si, Sf).
 %N = numero da transicao
@@ -29,6 +39,7 @@ transicao(5, 2, 3).
 transicao(6, 2, 3).
 transicao(7, 3, 2).
 transicao(8, 2, 4).
+transicao(9, 2, 3).
 
 %evento(N, T, [Vd],[Vu]).
 %N = numero do evendo
@@ -43,6 +54,7 @@ evento(5, 5, [w],[]).
 evento(6, 6, [d],[]).
 evento(7, 7, [],[]).
 evento(8, 8, [],[]).
+evento(9, 9, [],[]).
 
 %condicao(N, T, [Vd],[Vu]).
 %N = numero
@@ -66,76 +78,252 @@ acao(5, 5, [], [b, w]).
 acao(6, 6, [], [b, d]).
 acao(7, 7, [], [b]).
 acao(8, 8, [], []).
+acao(9, 9, [], [b]).
 
-%Ti = transicao de origem
-%Tk = transicao final
+%-------------------------------------------------------------
 
+% Encontra o caminho Solucao entre No_inicial e No_meta
+tem_caminho( No_inicial, No_meta, Solucao ):-
+    profundidade( [], No_inicial, No_meta, Sol_inv ),
+    reverse( Sol_inv, Solucao ).
+
+% Realiza a pesquisa em profundidade
+profundidade(Caminho, No_meta, No_meta, [No_meta|Caminho]).
+profundidade(Caminho, No, No_meta, Sol):-
+    transicao(_, No, No1),
+    not( member(No1, Caminho) ), % previne ciclos
+    profundidade( [No|Caminho], No1, No_meta, Sol ).
+
+
+%----------------- dependencia de dados ----------------------
+% V = variavel
+% Ti = transicao
+% verifica se uma variavel V eh definida na transicao Ti
 definida(V, Ti):-
     transicao(Ti, _, _),
     (( acao(_, Ti, La, _), member(V, La) );
     ( evento(_, Ti, Le, _), member(V, Le))).
 
+% V = variavel
+% Tk = transicao
+% verifica se uma variavel V eh usada na transicao Tk
 usada(V, Tk):-
     transicao(Tk, _, _),
-    (( condicao(_, Tk, _, Lc), member(V, Lc) );
-    ( acao(_, Tk, _, La), member(V, La) )).
-
-dep_dados(Ti, Tk):- definida(V, Ti),
-                    usada(V, Tk),
-                    tem_caminho(Ti, Tk, _).
-ligado(No, No1) :-
-    transicao(_, No, No1).
-
-% Encontra o caminho Solucao entre No_inicial e No_meta
-tem_caminho( No_inicial, No_meta, Solucao ):-
- profundidade( [], No_inicial, No_meta, Sol_inv ),
- reverse( Sol_inv, Solucao ).
-
-% Realiza a pesquisa em profundidade
-profundidade(Caminho, No_meta, No_meta, [No_meta|Caminho]).
-profundidade(Caminho, No, No_meta, Sol):-
-  transicao(_, No, No_meta),
- not( member(No1, Caminho) ), % previne ciclos
- profundidade( [No|Caminho], No1, No_meta, Sol ).
+    ( ( condicao(_, Tk, _, Lc), member(V, Lc));
+    ( acao(_, Tk, _, La), member(V, La) ) ).
 
 
+%1. v eh definida em Ti, seja em uma acao ou evento,
+%2. v eh usada em Tk, seja em uma condicao ou acao,
+compartilha_variavel(Ti, Tk):-
+    definida(V, Ti),
+    usada(V, Tk).
 
-%daki pra baixo eh estudo
-existeCaminho(Ti, Tk) :-%caso base
-    transicao(_, Ti, Tk).
-existeCaminho(Ti, Tk) :- %case recursivo
-    transicao(_, Ti, Z),
-    existeCaminho(Z, Tk).
+%funcao auxiliar para a dependencia de dados
+%Ti = transicao de origem
+%Tk = transicao final
+dep_dados_aux(Ti, Tk, L):-
+    compartilha_variavel(Ti, Tk),
+    transicao(Ti, No, _),
+    transicao(Tk, _, No_meta),
+    findall(X, tem_caminho(No, No_meta, X), L).
 
-s(2,3).
-s(1,3).
-s(3,4).
-s(4,5).
-s(3,5).
-s(2,5).
-objetivo(5).
-objetivo(1).
-objetivo(2).
-busca_profundidade(N,[N]) :-
-    objetivo(N).
-busca_profundidade(N,[N|Sol1]) :-
-    s(N,N1),
-    busca_profundidade(N1,Sol1).
+%Ti = transicao de origem
+%Tk = transicao final
+dep_dados(Ti, Tk):-
+    Ti \== Tk,
+    dep_dados_aux(Ti, Tk, L),
+    length(L, Tamanho),
+    Tamanho > 0.
 
 
-estrada(a,b,25).
-estrada(b,c,19).
-estrada(a,d,23).
-estrada(c,d,14).
-estrada(b,e,32).
-estrada(e,f,26).
-estrada(c,f,28).
-estrada(d,f,30).
+%------------------ dependencia de controle -------------------
+%   1. Um estado Z pos-domina um estado Y, se para cada caminho a partir de Y ate o estado final contem Z
+%Y = estado Y
+%Final = estado final
+% lista todos os caminhos de Y ate o estado final
+lista_caminhos(Y, Final):-
+    tem_caminho(Y, Final, _).
 
-distancia(X,Y,D):-estrada(X,Y,D).
-distancia(X,Y,D):-distancia(X,B,D1),distancia(B,Y,D2), D=[D1|D2].
+%Y = estado Y
+%Z = estado Z
+%Final = estado final
+% lista todos os caminhos de Y ate o estado final que contem Z
+lista_caminhos_2(Y, Z, L):-
+    final(Final),
+    tem_caminho(Y, Final, L),
+    member(Z, L).
 
-d(X,Y,[S]):-
-    transicao(S,X,Y).
-d(X,Y,[S|Sol]):-
-    d(X,B,Sol),d(B,Y,Sol).
+% verifica se o estado Z pos domina o estado Y
+pos_domina_estado(Z, Y) :-
+    Z \== Y,
+    final(Final),
+    findall(X, tem_caminho(Y, Final, X), L),
+    length(L, N),
+    findall(X2, lista_caminhos_2(Y, Z, X2), L2),
+    length(L2, N2),
+    N == N2.
+
+%   2. Z pos-domina uma transicao T, se para cada caminho a partir de Y passando pela transicao T ate o estado final passar por Z
+
+% verifica se um elemento Z esta contido em uma lista, que esta dentro de outra lista. Uma lista de listas
+customMember([], _).
+customMember([H|Trail] , Z):-
+    member(Z, H),
+    customMember(Trail, Z).
+
+% verifica se o estado Z pos domina a transicao Ti
+pos_domina_transicao(Z, Ti):-
+    transicao(Ti, _, X),
+    final(Final),
+    findall(L, tem_caminho(X, Final, L), Listas),
+    customMember(Listas, Z).
+
+% verifica se a transicao Tk tem dependencia de controle com a transicao Ti
+dep_controle(Tk, Ti):-
+    Ti \== Tk,
+    transicao(Tk, Z, _),
+    transicao(Ti, Y, _),
+    not(pos_domina_estado(Z, Y)),
+    pos_domina_transicao(Z, Ti).
+
+%------------------ dependencia de ativacao -------------------
+% adicao de uma nova transicao pode adicionar novas dependencias entre as partes existentes do sistema
+% mas nao pode excluir dependencias existentes entre as partes do modelo
+
+% existe dependencia de ativacao entre Ti e a dependencia de dados(Tj, Tk) se:
+% 1. existe um caminho de Tj->Ti
+% 2. Ti eh acionada
+% 3. existe um caminho Ti->Tk no que diz respeito à variavel v
+
+
+% ---------------------------------------------------------------------------------------------
+% gerando o grafo de dependencias
+
+gera_grafo_dep_dados(Lista):-
+    transicao(T, _, _),
+    transicao(T2, _, _),
+    (member(Lista, T) ; member(Lista, T2)),
+    dep_dados(T, T2),
+    assertz(dependencia_dados(T, T2)).
+
+
+gera_grafo_dep_controle(Lista):-
+    transicao(T, _, _),
+    transicao(T2, _, _),
+    (member(T, Lista) ; member(T2, Lista)),
+    dep_controle(T, T2),
+    assertz(dependencia_controle(T, T2)).
+
+grafo_dep(Lista):-
+    findall(_, gera_grafo_dep_dados(Lista), _),
+    findall(_, gera_grafo_dep_controle(Lista), _).
+
+passo_aux(Teste, T):-
+    grafo_dep(Teste),
+    transicao(T1, _, _),
+    transicao(T2, _, _),
+    T1 \== T,
+    T2 \== T,
+    findall(_, retract(dependencia_dados(T1, T2)), _),
+    findall(_, retract(dependencia_controle(T1, T2)), _).
+
+
+
+% ----------------------retirando elementos repetidos em uma lista -----------------------------
+retirar_todas(_, [], []).
+retirar_todas(Elem, [Elem|Cauda], L):- retirar_todas(Elem, Cauda, L).
+retirar_todas(Elem, [Elem1|Cauda], [Elem1|Cauda1]):-
+    Elem \== Elem1,
+    retirar_todas(Elem, Cauda, Cauda1).
+
+retirar_rep([], []).
+retirar_rep([Elem|Cauda], [Elem|Cauda1]):-
+    retirar_todas(Elem, Cauda, Lista),
+    retirar_rep(Lista, Cauda1).
+
+% distribui(L,A,B) : distribui itens de L entre A e B
+distribui([],[],[]).
+distribui([X],[X],[]).
+distribui([X,Y|Z],[X|A],[Y|B]) :-
+    distribui(Z,A,B).
+
+intercala([],B,B).
+intercala(A,[],A).
+intercala([X|A],[Y|B],[X|C]) :-
+    X =< Y,
+    intercala(A,[Y|B],C).
+intercala([X|A],[Y|B],[Y|C]) :-
+    X > Y,
+    intercala([X|A],B,C).
+
+% ordena(L,S) : ordena a lista L obtendo S
+ordena([],[]).
+ordena([X],[X]).
+ordena([X,Y|Z],S) :-
+    distribui([X,Y|Z],A,B),
+    ordena(A,As),
+    ordena(B,Bs),
+    intercala(As,Bs,S).
+
+compara_resultados([], [], _).
+compara_resultados([H1|A], [H2|B], _) :-
+    H1 == H2,
+    compara_resultados(A, B, _).
+
+% -----------------------------------------------------------------------------------------------
+
+procura_dep_controle(T, Resp):-
+    findall(_, dependencia_controle(_, T), L),
+    adiciona_sem_repetir(L, Resp).
+
+
+%procura_resultados([], [], _):-!.%caso de parada
+%procura_resultados([H1|A], B, S) :-
+%    write(B),
+%    procura_resultados(A, [H1|B],[H1|B]).
+
+procura_resultados([Result|Trail]):-
+    findall(A, resultado(A, Result), Sol_inv),
+    reverse( Sol_inv, Solucao ),
+    write('casos de teste sao equivalentes: '), write(Solucao), nl,
+    procura_resultados(Trail).
+
+
+
+% Teste = caso de teste
+% T = transicao adicionada
+teste([], _, _, 0):-
+    write('caso de teste vazio'), !.
+teste(Teste, T, S, N):-
+    findall(_, passo_aux(Teste, T), _),
+    findall(Y, dependencia_controle(T, Y), X),
+    findall(Y, dependencia_controle(Y, T), X2),
+    retirar_rep(X, L),
+    retirar_rep(X2, L2),
+    append(L, L2, L3),
+    retirar_rep([T|L3], L4),
+    ordena(L4, S),
+    assertz(resultado(N, S)).
+
+% primeiro parametro = lista de casos de teste
+% T = transicao adicionada
+% S = solucao
+% N = numero do caso de teste
+testar([], _, _, 0):-!. % quando o conjunto estivar vazio
+testar([Teste|Trail], T, S, N):-
+    length(Trail, Length),
+    Length1 is Length +1,
+    teste(Teste, T, S1, Length1),
+    testar(Trail, T, [S1|S], N1),
+    N is N1 + 1.
+
+prepara_teste(Testes, T, S, N):-
+    testar(Testes, T, S, N),
+    findall(A, resultado(_, A), L),
+    retirar_rep(L, B),
+    write('transicoes a serem testadas '), write(B), nl,
+    procura_resultados(B).
+
+
+% prepara_teste([[1,4,9,7,5,7,9,7,8], [1,2,4,9,7,5,7,9,7,8], [1,2,2,4,9,7,5,7,9,7,8], [1,2,2,3]], 9, [], N).
