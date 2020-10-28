@@ -179,7 +179,8 @@ pos_domina_transicao(Z, Ti):-
     findall(L, tem_caminho(X, Final, L), Listas),
     customMember(Listas, Z).
 
-% verifica se a transicao Tk tem dependencia de controle com a transicao Ti
+% verifica se a transicao Tk 
+% tem dependencia de controle com a transicao Ti
 dep_controle(Tk, Ti):-
     Ti \== Tk,
     transicao(Tk, Z, _),
