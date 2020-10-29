@@ -353,7 +353,6 @@ adicao_transicao(Testes, T, S, N):-
     findall(_, dep_ativacao(T, _, _), _),
     findall(A, resultado_adicao(_, A), L),
     retirar_rep(L, B),
-    write('transicoes a serem testadas '), write(B), nl,
     procura_resultados_adicao(B).
 
 
@@ -400,5 +399,4 @@ exclui_transicao(Testes, T, S, N):-
     findall(_, dep_fantasma(T, _), _),
     findall(A, resultado_exclusao(_, A), L),
     retirar_rep(L, B),
-    write('transicoes a serem testadas '), write(B), nl,
     procura_resultados_exclusao(B).
