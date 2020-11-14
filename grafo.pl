@@ -41,6 +41,7 @@ transicao(7, 3, 2).
 transicao(8, 2, 4).
 transicao(9, 2, 3).
 
+
 %evento(N, T, [Vd],[Vu]).
 %N = numero do evendo
 %T = transicao do evento
@@ -158,6 +159,8 @@ lista_caminhos_2(Y, Z, L):-
 pos_domina_estado(Z, Y) :-
     Z \== Y,
     final(Final),
+    estado(Z),
+    estado(Y),
     findall(X, tem_caminho(Y, Final, X), L),
     length(L, N),
     findall(X2, lista_caminhos_2(Y, Z, X2), L2),
@@ -175,11 +178,12 @@ customMember([H|Trail] , Z):-
 % verifica se o estado Z pos domina a transicao Ti
 pos_domina_transicao(Z, Ti):-
     transicao(Ti, _, X),
+    estado(X),
     final(Final),
     findall(L, tem_caminho(X, Final, L), Listas),
     customMember(Listas, Z).
 
-% verifica se a transicao Tk 
+% verifica se a transicao Tk
 % tem dependencia de controle com a transicao Ti
 dep_controle(Tk, Ti):-
     Ti \== Tk,
@@ -206,7 +210,7 @@ dep_ativacao(Ti, Tj, Tk):-
     findall(X2, tem_caminho(Ti, Tk, X2), _), !.
 
 %------------------ dependencia fantasma -------------------
-% A exclusão de uma transição pode causar a eliminação de dependências associadas à transição excluída onde a transição excluída dependia de outra transição 
+% A exclusão de uma transição pode causar a eliminação de dependências associadas à transição excluída onde a transição excluída dependia de outra transição
 % a exclusão de uma transição não pode introduzir novas dependências
 
 % 1. houver uma dependência de dados entre Tj e Ti em relação à variável v
@@ -227,7 +231,7 @@ dep_fantasma(Ti, Tj):-
     condicao(_,Ti,_,VarCondicao),
     length(VarCondicao, L),
     L > 0, % 4
-    !. 
+    !.
 
 
 % ---------------------------------------------------------------------------------------------
@@ -299,18 +303,6 @@ ordena([X,Y|Z],S) :-
     ordena(B,Bs),
     intercala(As,Bs,S).
 
-compara_resultados([], [], _).
-compara_resultados([H1|A], [H2|B], _) :-
-    H1 == H2,
-    compara_resultados(A, B, _).
-
-% -----------------------------------------------------------------------------------------------
-
-procura_dep_controle(T, Resp):-
-    findall(_, dependencia_controle(_, T), L),
-    adiciona_sem_repetir(L, Resp).
-
-
 
 %-------------------- TESTE ADICAO --------------------------------------------------------------
 % adicao_transicao([[1,4,9,7,5,7,9,7,8], [1,2,4,9,7,5,7,9,7,8], [1,2,2,4,9,7,5,7,9,7,8], [1,2,2,3]], 9, [], N).
@@ -318,7 +310,7 @@ procura_dep_controle(T, Resp):-
 procura_resultados_adicao([Result|Trail]):-
     findall(A, resultado_adicao(A, Result), Sol_inv),
     reverse( Sol_inv, Solucao ),
-    write('casos de teste sao equivalentes: '), write(Solucao), nl,
+    write('os seguintes casos de testes sao equivalentes: '), write(Solucao), nl,
     procura_resultados_adicao(Trail).
 
 % Teste = caso de teste
@@ -348,6 +340,10 @@ testar_adicao([Teste|Trail], T, S, N):-
     testar_adicao(Trail, T, [S1|S], N1),
     N is N1 + 1.
 
+% primeiro parametro = lista de casos de testes
+% T = transicao adicionada
+% S = solucao
+% N = numero do caso de teste
 adicao_transicao(Testes, T, S, N):-
     testar_adicao(Testes, T, S, N),
     findall(_, dep_ativacao(T, _, _), _),
@@ -362,7 +358,7 @@ adicao_transicao(Testes, T, S, N):-
 procura_resultados_exclusao([Result|Trail]):-
     findall(A, resultado_exclusao(A, Result), Sol_inv),
     reverse( Sol_inv, Solucao ),
-    write('casos de teste sao equivalentes: '), write(Solucao), nl,
+    write('os seguintes casos de testes sao equivalentes: '), write(Solucao), nl,
     procura_resultados_exclusao(Trail).
 
 
@@ -382,7 +378,7 @@ teste_exclusao(Teste, T, S, N):-
     assertz(resultado_exclusao(N, S)).
 
 % primeiro parametro = lista de casos de teste
-% T = transicao adicionada
+% T = transicao excluida
 % S = solucao
 % N = numero do caso de teste
 testar_exclusao([], _, _, 0):-!. % quando o conjunto estivar vazio
@@ -393,7 +389,10 @@ testar_exclusao([Teste|Trail], T, S, N):-
     testar_exclusao(Trail, T, [S1|S], N1),
     N is N1 + 1.
 
-
+% primeiro parametro = lista de casos de testes
+% T = transicao excluida
+% S = solucao
+% N = numero do caso de teste
 exclui_transicao(Testes, T, S, N):-
     testar_exclusao(Testes, T, S, N),
     findall(_, dep_fantasma(T, _), _),

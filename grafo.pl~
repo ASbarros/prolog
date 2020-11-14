@@ -41,6 +41,7 @@ transicao(7, 3, 2).
 transicao(8, 2, 4).
 transicao(9, 2, 3).
 
+
 %evento(N, T, [Vd],[Vu]).
 %N = numero do evendo
 %T = transicao do evento
@@ -158,6 +159,8 @@ lista_caminhos_2(Y, Z, L):-
 pos_domina_estado(Z, Y) :-
     Z \== Y,
     final(Final),
+    estado(Z),
+    estado(Y),
     findall(X, tem_caminho(Y, Final, X), L),
     length(L, N),
     findall(X2, lista_caminhos_2(Y, Z, X2), L2),
@@ -175,11 +178,13 @@ customMember([H|Trail] , Z):-
 % verifica se o estado Z pos domina a transicao Ti
 pos_domina_transicao(Z, Ti):-
     transicao(Ti, _, X),
+    estado(X),
     final(Final),
     findall(L, tem_caminho(X, Final, L), Listas),
     customMember(Listas, Z).
 
-% verifica se a transicao Tk tem dependencia de controle com a transicao Ti
+% verifica se a transicao Tk
+% tem dependencia de controle com a transicao Ti
 dep_controle(Tk, Ti):-
     Ti \== Tk,
     transicao(Tk, Z, _),
@@ -195,6 +200,38 @@ dep_controle(Tk, Ti):-
 % 1. existe um caminho de Tj->Ti
 % 2. Ti eh acionada
 % 3. existe um caminho Ti->Tk no que diz respeito à variavel v
+
+% Ti = transicao adicionada
+% dependencia de dados(Tj, Tk)
+dep_ativacao(Ti, Tj, Tk):-
+    transicao(Tj, _, _),
+    transicao(Tk, _, _),
+    findall(X1, tem_caminho(Tj, Ti, X1), _),
+    findall(X2, tem_caminho(Ti, Tk, X2), _), !.
+
+%------------------ dependencia fantasma -------------------
+% A exclusão de uma transição pode causar a eliminação de dependências associadas à transição excluída onde a transição excluída dependia de outra transição
+% a exclusão de uma transição não pode introduzir novas dependências
+
+% 1. houver uma dependência de dados entre Tj e Ti em relação à variável v
+% 2. existe um caminho claro de definição de Tj para Sb (Ti)
+%    •	Sb (T) é um estado de onde T está a sair
+% 3. o evento E (Ti) ocorre no estado Sb (Ti)
+%    •	E (T) é um evento associado à transição T.
+% 4. a condição C (Ti) é avaliada como TRUE
+%    •	C (T) é uma condição de habilitação associada a transição T.
+dep_fantasma(Ti, Tj):-
+    transicao(Tj, _, _),
+    transicao(Ti, _, _),
+    dep_dados(Tj, Ti),% 1
+    transicao(Ti, EstadoInicialTi, _),
+    findall(X1, tem_caminho(Tj, EstadoInicialTi, X1), _),% 2
+    evento(_, Ti,_,VarEvento),
+    evento(_, EstadoInicialTi,VarEvento,_),% 3
+    condicao(_,Ti,_,VarCondicao),
+    length(VarCondicao, L),
+    L > 0, % 4
+    !.
 
 
 % ---------------------------------------------------------------------------------------------
@@ -266,36 +303,21 @@ ordena([X,Y|Z],S) :-
     ordena(B,Bs),
     intercala(As,Bs,S).
 
-compara_resultados([], [], _).
-compara_resultados([H1|A], [H2|B], _) :-
-    H1 == H2,
-    compara_resultados(A, B, _).
 
-% -----------------------------------------------------------------------------------------------
+%-------------------- TESTE ADICAO --------------------------------------------------------------
+% adicao_transicao([[1,4,9,7,5,7,9,7,8], [1,2,4,9,7,5,7,9,7,8], [1,2,2,4,9,7,5,7,9,7,8], [1,2,2,3]], 9, [], N).
 
-procura_dep_controle(T, Resp):-
-    findall(_, dependencia_controle(_, T), L),
-    adiciona_sem_repetir(L, Resp).
-
-
-%procura_resultados([], [], _):-!.%caso de parada
-%procura_resultados([H1|A], B, S) :-
-%    write(B),
-%    procura_resultados(A, [H1|B],[H1|B]).
-
-procura_resultados([Result|Trail]):-
-    findall(A, resultado(A, Result), Sol_inv),
+procura_resultados_adicao([Result|Trail]):-
+    findall(A, resultado_adicao(A, Result), Sol_inv),
     reverse( Sol_inv, Solucao ),
     write('casos de teste sao equivalentes: '), write(Solucao), nl,
-    procura_resultados(Trail).
-
-
+    procura_resultados_adicao(Trail).
 
 % Teste = caso de teste
 % T = transicao adicionada
-teste([], _, _, 0):-
+teste_adicao([], _, _, 0):-
     write('caso de teste vazio'), !.
-teste(Teste, T, S, N):-
+teste_adicao(Teste, T, S, N):-
     findall(_, passo_aux(Teste, T), _),
     findall(Y, dependencia_controle(T, Y), X),
     findall(Y, dependencia_controle(Y, T), X2),
@@ -304,26 +326,76 @@ teste(Teste, T, S, N):-
     append(L, L2, L3),
     retirar_rep([T|L3], L4),
     ordena(L4, S),
-    assertz(resultado(N, S)).
+    assertz(resultado_adicao(N, S)).
 
 % primeiro parametro = lista de casos de teste
 % T = transicao adicionada
 % S = solucao
 % N = numero do caso de teste
-testar([], _, _, 0):-!. % quando o conjunto estivar vazio
-testar([Teste|Trail], T, S, N):-
+testar_adicao([], _, _, 0):-!. % quando o conjunto estivar vazio
+testar_adicao([Teste|Trail], T, S, N):-
     length(Trail, Length),
     Length1 is Length +1,
-    teste(Teste, T, S1, Length1),
-    testar(Trail, T, [S1|S], N1),
+    teste_adicao(Teste, T, S1, Length1),
+    testar_adicao(Trail, T, [S1|S], N1),
     N is N1 + 1.
 
-prepara_teste(Testes, T, S, N):-
-    testar(Testes, T, S, N),
-    findall(A, resultado(_, A), L),
+% primeiro parametro = lista de casos de testes
+% T = transicao adicionada
+% S = solucao
+% N = numero do caso de teste
+adicao_transicao(Testes, T, S, N):-
+    testar_adicao(Testes, T, S, N),
+    findall(_, dep_ativacao(T, _, _), _),
+    findall(A, resultado_adicao(_, A), L),
     retirar_rep(L, B),
-    write('transicoes a serem testadas '), write(B), nl,
-    procura_resultados(B).
+    procura_resultados_adicao(B).
 
 
-% prepara_teste([[1,4,9,7,5,7,9,7,8], [1,2,4,9,7,5,7,9,7,8], [1,2,2,4,9,7,5,7,9,7,8], [1,2,2,3]], 9, [], N).
+%-------------------------------------------------- TESTE EXCLUSAO -------------------------
+%  exclui_transicao([[1,4,5,7,10,9,7,8],[1,2,4,5,7,10,8]], 6, [], N).
+
+procura_resultados_exclusao([Result|Trail]):-
+    findall(A, resultado_exclusao(A, Result), Sol_inv),
+    reverse( Sol_inv, Solucao ),
+    write('casos de teste sao equivalentes: '), write(Solucao), nl,
+    procura_resultados_exclusao(Trail).
+
+
+% Teste = caso de teste
+% T = transicao adicionada
+teste_exclusao([], _, _, 0):-
+    write('caso de teste vazio'), !.
+teste_exclusao(Teste, T, S, N):-
+    findall(_, passo_aux(Teste, T), _),
+    findall(Y, dependencia_controle(T, Y), X),
+    findall(Y, dependencia_controle(Y, T), X2),
+    retirar_rep(X, L),
+    retirar_rep(X2, L2),
+    append(L, L2, L3),
+    retirar_rep([T|L3], L4),
+    ordena(L4, S),
+    assertz(resultado_exclusao(N, S)).
+
+% primeiro parametro = lista de casos de teste
+% T = transicao excluida
+% S = solucao
+% N = numero do caso de teste
+testar_exclusao([], _, _, 0):-!. % quando o conjunto estivar vazio
+testar_exclusao([Teste|Trail], T, S, N):-
+    length(Trail, Length),
+    Length1 is Length +1,
+    teste_exclusao(Teste, T, S1, Length1),
+    testar_exclusao(Trail, T, [S1|S], N1),
+    N is N1 + 1.
+
+% primeiro parametro = lista de casos de testes
+% T = transicao excluida
+% S = solucao
+% N = numero do caso de teste
+exclui_transicao(Testes, T, S, N):-
+    testar_exclusao(Testes, T, S, N),
+    findall(_, dep_fantasma(T, _), _),
+    findall(A, resultado_exclusao(_, A), L),
+    retirar_rep(L, B),
+    procura_resultados_exclusao(B).
